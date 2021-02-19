@@ -126,47 +126,43 @@ func TestStringDuration(t *testing.T) {
 	}
 
 	for _, testValue := range testValues {
-		{
-			localValue := testValue
-			for _, testDefinition := range testDefinitions {
-				{
-					localTestDefinition := testDefinition
-					t.Run(testDefinition.name, func(t *testing.T) {
-						t.Parallel()
-						var sdv strdur.StringDuration
-						if err := localTestDefinition.fn(t, &sdv, localValue); err != nil {
-							t.Errorf(err.Error())
-							t.Fail()
-							return
-						}
-						if str := sdv.String(); str != localValue.oString {
-							t.Errorf("String value mismatch: expected=%q; actual=%q", localValue.oString, str)
-							t.Fail()
-						}
-						if txt, err := sdv.MarshalText(); err != nil {
-							t.Errorf("Text marshalling error: %v", err)
-							t.Fail()
-						} else if !bytes.Equal(localValue.oText, txt) {
-							t.Errorf("Text value mismatch: expected=%v; actual=%v", localValue.oText, txt)
-							t.Fail()
-						}
-						if jsn, err := sdv.MarshalJSON(); err != nil {
-							t.Errorf("JSON marshalling error: %v", err)
-							t.Fail()
-						} else if !bytes.Equal(localValue.oJSON, jsn) {
-							t.Errorf("JSON value mismatch: expected=%v; actual=%v", localValue.oJSON, jsn)
-							t.Fail()
-						}
-						if bn, err := sdv.MarshalBinary(); err != nil {
-							t.Errorf("Binary marshalling error: %v", err)
-							t.Fail()
-						} else if !bytes.Equal(localValue.oBinary, bn) {
-							t.Errorf("Binary value mismatch: expected=%v; actual=%v", localValue.oBinary, bn)
-							t.Fail()
-						}
-					})
+		localValue := testValue
+		for _, testDefinition := range testDefinitions {
+			localTestDefinition := testDefinition
+			t.Run(testDefinition.name, func(t *testing.T) {
+				t.Parallel()
+				var sdv strdur.StringDuration
+				if err := localTestDefinition.fn(t, &sdv, localValue); err != nil {
+					t.Errorf(err.Error())
+					t.Fail()
+					return
 				}
-			}
+				if str := sdv.String(); str != localValue.oString {
+					t.Errorf("String value mismatch: expected=%q; actual=%q", localValue.oString, str)
+					t.Fail()
+				}
+				if txt, err := sdv.MarshalText(); err != nil {
+					t.Errorf("Text marshalling error: %v", err)
+					t.Fail()
+				} else if !bytes.Equal(localValue.oText, txt) {
+					t.Errorf("Text value mismatch: expected=%v; actual=%v", localValue.oText, txt)
+					t.Fail()
+				}
+				if jsn, err := sdv.MarshalJSON(); err != nil {
+					t.Errorf("JSON marshalling error: %v", err)
+					t.Fail()
+				} else if !bytes.Equal(localValue.oJSON, jsn) {
+					t.Errorf("JSON value mismatch: expected=%v; actual=%v", localValue.oJSON, jsn)
+					t.Fail()
+				}
+				if bn, err := sdv.MarshalBinary(); err != nil {
+					t.Errorf("Binary marshalling error: %v", err)
+					t.Fail()
+				} else if !bytes.Equal(localValue.oBinary, bn) {
+					t.Errorf("Binary value mismatch: expected=%v; actual=%v", localValue.oBinary, bn)
+					t.Fail()
+				}
+			})
 		}
 	}
 }
