@@ -39,7 +39,6 @@ a great way to handle embedded types.
 
 Given this example:
 
-*GO*:
 ```go
 package main
 
