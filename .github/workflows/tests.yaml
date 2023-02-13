@@ -1,0 +1,41 @@
+name: "Tests"
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  tests:
+    runs-on: 'ubuntu-latest'
+    strategy:
+      matrix:
+        go_version:
+          - '1.18'
+          - '1.19'
+          - '1.20'
+
+    name: 'Tests - go v${{ matrix.go_version }}'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '${{ matrix.go_version }}'
+          cache: true
+
+      - name: 'vendor'
+        run: |
+          go mod tidy && go mod vendor
+
+      - name: 'vet'
+        run: |
+          go vet ./...
+
+      - name: 'test'
+        run: |
+          go test ./...

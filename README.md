@@ -1,5 +1,7 @@
 # go-strdur
 
+[![Tests](https://github.com/dcarbone/go-strdur/actions/workflows/tests.yaml/badge.svg)](https://github.com/dcarbone/go-strdur/actions/workflows/tests.yaml)
+
 A highly inefficient implementation of `time.Duration` based on a string, rather than an int64.  It is designed purely
 soo that hcl configuration files can contain a string representation of a duration for config values, rather than an
 int64.
