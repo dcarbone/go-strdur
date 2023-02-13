@@ -7,19 +7,22 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dcarbone/go-strdur"
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/dcarbone/go-strdur"
 )
 
 func TestStringDuration(t *testing.T) {
 	type (
 		// represents a set of inputs and their expected outputs
 		testValue struct {
-			iString string
-			iText   []byte
-			iJSON   []byte
-			iBinary []byte
-			iHCL    []byte
+			iString       string
+			iText         []byte
+			iJSON         []byte
+			iBinary       []byte
+			iHCL          []byte
+			iMapStructure map[string]interface{}
 
 			oString string
 			oText   []byte
@@ -35,39 +38,42 @@ func TestStringDuration(t *testing.T) {
 
 	var testValues = []testValue{
 		{
-			iString: "",
-			iText:   []byte(""),
-			iJSON:   []byte("\"\""),
-			iBinary: []byte{0, 0, 0, 0, 0, 0, 0, 0},
-			iHCL:    []byte("sdv = \"\""),
+			iString:       "",
+			iText:         []byte(""),
+			iJSON:         []byte(`""`),
+			iBinary:       []byte{0, 0, 0, 0, 0, 0, 0, 0},
+			iHCL:          []byte(`sdv = ""`),
+			iMapStructure: map[string]interface{}{"sdv": ""},
 
 			oString: "0s",
 			oText:   []byte("0s"),
-			oJSON:   []byte("\"0s\""),
+			oJSON:   []byte(`"0s"`),
 			oBinary: []byte{0, 0, 0, 0, 0, 0, 0, 0},
 		},
 		{
-			iString: "24h",
-			iText:   []byte("24h"),
-			iJSON:   []byte("\"24h\""),
-			iBinary: []byte{0, 0, 79, 145, 148, 78, 0, 0},
-			iHCL:    []byte("sdv = \"24h\""),
+			iString:       "24h",
+			iText:         []byte("24h"),
+			iJSON:         []byte(`"24h"`),
+			iBinary:       []byte{0, 0, 79, 145, 148, 78, 0, 0},
+			iHCL:          []byte(`sdv = "24h"`),
+			iMapStructure: map[string]interface{}{"sdv": "24h"},
 
 			oString: "24h0m0s",
 			oText:   []byte("24h0m0s"),
-			oJSON:   []byte("\"24h0m0s\""),
+			oJSON:   []byte(`"24h0m0s"`),
 			oBinary: []byte{0, 0, 79, 145, 148, 78, 0, 0},
 		},
 		{
-			iString: "2562047h47m16s854775807ns",
-			iText:   []byte("2562047h47m16s854775807ns"),
-			iJSON:   []byte("\"2562047h47m16s854775807ns\""),
-			iBinary: []byte{255, 255, 255, 255, 255, 255, 255, 127},
-			iHCL:    []byte("sdv = \"2562047h47m16s854775807ns\""),
+			iString:       "2562047h47m16s854775807ns",
+			iText:         []byte("2562047h47m16s854775807ns"),
+			iJSON:         []byte(`"2562047h47m16s854775807ns"`),
+			iBinary:       []byte{255, 255, 255, 255, 255, 255, 255, 127},
+			iHCL:          []byte(`sdv = "2562047h47m16s854775807ns"`),
+			iMapStructure: map[string]interface{}{"sdv": "2562047h47m16s854775807ns"},
 
 			oString: "2562047h47m16.854775807s",
 			oText:   []byte("2562047h47m16.854775807s"),
-			oJSON:   []byte("\"2562047h47m16.854775807s\""),
+			oJSON:   []byte(`"2562047h47m16.854775807s"`),
 			oBinary: []byte{255, 255, 255, 255, 255, 255, 255, 127},
 		},
 	}
@@ -119,6 +125,18 @@ func TestStringDuration(t *testing.T) {
 				}
 				if err := hclsimple.Decode("example.hcl", tv.iHCL, nil, &confT{SDV: sdv}); err != nil {
 					return fmt.Errorf("error parsing %q as %T: %w", tv.iHCL, sdv, err)
+				}
+				return nil
+			},
+		},
+		{
+			name: "mapstructure",
+			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
+				type confT struct {
+					SDV *strdur.StringDuration `mapstructure:"sdv"`
+				}
+				if err := mapstructure.Decode(tv.iMapStructure, &confT{SDV: sdv}); err != nil {
+					return fmt.Errorf("error parsing %q as %T: %w", tv.iMapStructure, sdv, err)
 				}
 				return nil
 			},
