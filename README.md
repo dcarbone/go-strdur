@@ -6,6 +6,12 @@ A highly inefficient implementation of `time.Duration` based on a string, rather
 soo that hcl configuration files can contain a string representation of a duration for config values, rather than an
 int64.
 
+# Installation
+
+```shell
+go get -u github.com/dcarbone/go-strdur/v2
+```
+
 ## Example
 
 ```go
@@ -14,7 +20,7 @@ package main
 import (
     "fmt"
     
-    "github.com/dcarbone/go-strdur"
+    "github.com/dcarbone/go-strdur/v2"
     "github.com/hashicorp/hcl/v2/hclsimple"
 )
 
