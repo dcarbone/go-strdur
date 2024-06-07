@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/dcarbone/go-strdur"
+	"github.com/dcarbone/go-strdur/v2"
 )
 
 func TestStringDuration(t *testing.T) {
@@ -22,7 +22,7 @@ func TestStringDuration(t *testing.T) {
 			iJSON         []byte
 			iBinary       []byte
 			iHCL          []byte
-			iMapStructure map[string]interface{}
+			iMapStructure map[string]any
 
 			oString string
 			oText   []byte
@@ -32,7 +32,7 @@ func TestStringDuration(t *testing.T) {
 
 		testRun struct {
 			name string
-			fn   func(*testing.T, *strdur.StringDuration, testValue) error
+			op   func(*testing.T, testValue) (strdur.StringDuration, error)
 		}
 	)
 
@@ -43,7 +43,7 @@ func TestStringDuration(t *testing.T) {
 			iJSON:         []byte(`""`),
 			iBinary:       []byte{0, 0, 0, 0, 0, 0, 0, 0},
 			iHCL:          []byte(`sdv = ""`),
-			iMapStructure: map[string]interface{}{"sdv": ""},
+			iMapStructure: map[string]any{"sdv": ""},
 
 			oString: "0s",
 			oText:   []byte("0s"),
@@ -56,7 +56,7 @@ func TestStringDuration(t *testing.T) {
 			iJSON:         []byte(`"24h"`),
 			iBinary:       []byte{0, 0, 79, 145, 148, 78, 0, 0},
 			iHCL:          []byte(`sdv = "24h"`),
-			iMapStructure: map[string]interface{}{"sdv": "24h"},
+			iMapStructure: map[string]any{"sdv": "24h"},
 
 			oString: "24h0m0s",
 			oText:   []byte("24h0m0s"),
@@ -69,7 +69,7 @@ func TestStringDuration(t *testing.T) {
 			iJSON:         []byte(`"2562047h47m16s854775807ns"`),
 			iBinary:       []byte{255, 255, 255, 255, 255, 255, 255, 127},
 			iHCL:          []byte(`sdv = "2562047h47m16s854775807ns"`),
-			iMapStructure: map[string]interface{}{"sdv": "2562047h47m16s854775807ns"},
+			iMapStructure: map[string]any{"sdv": "2562047h47m16s854775807ns"},
 
 			oString: "2562047h47m16.854775807s",
 			oText:   []byte("2562047h47m16.854775807s"),
@@ -78,106 +78,132 @@ func TestStringDuration(t *testing.T) {
 		},
 	}
 
-	var testDefinitions = []testRun{
+	var testRuns = []testRun{
 		{
 			name: "flag",
-			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				var sdv strdur.StringDuration
 				fs := flag.NewFlagSet("StringDurationTest", flag.ContinueOnError)
-				fs.Var(sdv, "sdv", "")
+				fs.Var(&sdv, "sdv", "")
 				if err := fs.Parse([]string{"-sdv", tv.iString}); err != nil {
-					return fmt.Errorf("error parsing %q as %T: %w", tv.iString, sdv, err)
+					return sdv, fmt.Errorf("error parsing %q as %T: %w", tv.iString, sdv, err)
 				}
-				return nil
+				return sdv, nil
 			},
 		},
 		{
 			name: "text",
-			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				var sdv strdur.StringDuration
 				if err := sdv.UnmarshalText(tv.iText); err != nil {
-					return fmt.Errorf("error paring %q as %T: %w", tv.iText, sdv, err)
+					return sdv, fmt.Errorf("error paring %q as %T: %w", tv.iText, sdv, err)
 				}
-				return nil
+				return sdv, nil
 			},
 		},
 		{
 			name: "json",
-			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
-				if err := json.Unmarshal(tv.iJSON, sdv); err != nil {
-					return fmt.Errorf("error parsing %q: %v", string(tv.iJSON), err)
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				var sdv strdur.StringDuration
+				if err := json.Unmarshal(tv.iJSON, &sdv); err != nil {
+					return sdv, fmt.Errorf("error parsing %q: %v", string(tv.iJSON), err)
 				}
-				return nil
+				return sdv, nil
+			},
+		},
+		{
+			name: "json-field",
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				type testT struct {
+					SDV strdur.StringDuration `json:"strdur"`
+				}
+				var (
+					tt testT
+
+					tj = []byte(fmt.Sprintf(`{"strdur": %s}`, string(tv.iJSON)))
+				)
+				if err := json.Unmarshal(tj, &tt); err != nil {
+					return tt.SDV, fmt.Errorf("error parsing %q: %v", string(tv.iJSON), err)
+				}
+				return tt.SDV, nil
 			},
 		},
 		{
 			name: "binary",
-			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				var sdv strdur.StringDuration
 				if err := sdv.UnmarshalBinary(tv.iBinary); err != nil {
-					return fmt.Errorf("error parsing %q as %T: %w", tv.iBinary, sdv, err)
+					return sdv, fmt.Errorf("error parsing %q as %T: %w", tv.iBinary, sdv, err)
 				}
-				return nil
+				return sdv, nil
 			},
 		},
 		{
 			name: "hcl",
-			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
-				type confT struct {
-					SDV *strdur.StringDuration `hcl:"sdv"`
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				type testT struct {
+					SDV strdur.StringDuration `hcl:"sdv"`
 				}
-				if err := hclsimple.Decode("example.hcl", tv.iHCL, nil, &confT{SDV: sdv}); err != nil {
-					return fmt.Errorf("error parsing %q as %T: %w", tv.iHCL, sdv, err)
+				var tt testT
+				if err := hclsimple.Decode("example.hcl", tv.iHCL, nil, &tt); err != nil {
+					return tt.SDV, fmt.Errorf("error parsing %q as %T: %w", tv.iHCL, tt.SDV, err)
 				}
-				return nil
+				return tt.SDV, nil
 			},
 		},
 		{
 			name: "mapstructure",
-			fn: func(t *testing.T, sdv *strdur.StringDuration, tv testValue) error {
-				type confT struct {
-					SDV *strdur.StringDuration `mapstructure:"sdv"`
+			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
+				type testT struct {
+					SDV strdur.StringDuration `mapstructure:"sdv"`
 				}
-				if err := mapstructure.Decode(tv.iMapStructure, &confT{SDV: sdv}); err != nil {
-					return fmt.Errorf("error parsing %q as %T: %w", tv.iMapStructure, sdv, err)
+				var tt testT
+				if err := mapstructure.Decode(tv.iMapStructure, &tt); err != nil {
+					return tt.SDV, fmt.Errorf("error parsing %q as %T: %w", tv.iMapStructure, tt.SDV, err)
 				}
-				return nil
+				return tt.SDV, nil
 			},
 		},
 	}
 
-	for _, testValue := range testValues {
-		localValue := testValue
-		for _, testDefinition := range testDefinitions {
-			localTestDefinition := testDefinition
-			t.Run(testDefinition.name, func(t *testing.T) {
+	for _, value := range testValues {
+		value := value
+		for _, testDef := range testRuns {
+			testDef := testDef
+			t.Run(testDef.name, func(t *testing.T) {
 				t.Parallel()
-				var sdv strdur.StringDuration
-				if err := localTestDefinition.fn(t, &sdv, localValue); err != nil {
+				var (
+					sdv strdur.StringDuration
+					err error
+				)
+				if sdv, err = testDef.op(t, value); err != nil {
 					t.Errorf(err.Error())
 					t.Fail()
 					return
 				}
-				if str := sdv.String(); str != localValue.oString {
-					t.Errorf("String value mismatch: expected=%q; actual=%q", localValue.oString, str)
+				if str := sdv.String(); str != value.oString {
+					t.Errorf("String value mismatch: expected=%q; actual=%q", value.oString, str)
 					t.Fail()
 				}
 				if txt, err := sdv.MarshalText(); err != nil {
 					t.Errorf("Text marshalling error: %v", err)
 					t.Fail()
-				} else if !bytes.Equal(localValue.oText, txt) {
-					t.Errorf("Text value mismatch: expected=%v; actual=%v", localValue.oText, txt)
+				} else if !bytes.Equal(value.oText, txt) {
+					t.Errorf("Text value mismatch: expected=%v; actual=%v", value.oText, txt)
 					t.Fail()
 				}
 				if jsn, err := sdv.MarshalJSON(); err != nil {
 					t.Errorf("JSON marshalling error: %v", err)
 					t.Fail()
-				} else if !bytes.Equal(localValue.oJSON, jsn) {
-					t.Errorf("JSON value mismatch: expected=%v; actual=%v", localValue.oJSON, jsn)
+				} else if !bytes.Equal(value.oJSON, jsn) {
+					t.Errorf("JSON value mismatch: expected=%v; actual=%v", value.oJSON, jsn)
 					t.Fail()
 				}
 				if bn, err := sdv.MarshalBinary(); err != nil {
 					t.Errorf("Binary marshalling error: %v", err)
 					t.Fail()
-				} else if !bytes.Equal(localValue.oBinary, bn) {
-					t.Errorf("Binary value mismatch: expected=%v; actual=%v", localValue.oBinary, bn)
+				} else if !bytes.Equal(value.oBinary, bn) {
+					t.Errorf("Binary value mismatch: expected=%v; actual=%v", value.oBinary, bn)
 					t.Fail()
 				}
 			})

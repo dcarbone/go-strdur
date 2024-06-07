@@ -13,12 +13,12 @@ import (
 type StringDuration string
 
 // Type is for spf13.viper parameter compatibility
-func (sd *StringDuration) Type() string {
+func (sd StringDuration) Type() string {
 	const t = "StringDuration"
 	return t
 }
 
-func (sd *StringDuration) String() string {
+func (sd StringDuration) String() string {
 	// todo: this...is awful
 	return sd.Duration().String()
 }
@@ -36,8 +36,8 @@ func (sd *StringDuration) Set(v string) error {
 	return nil
 }
 
-func (sd *StringDuration) MarshalBinary() ([]byte, error) {
-	b := make([]byte, 8, 8)
+func (sd StringDuration) MarshalBinary() ([]byte, error) {
+	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(sd.Duration()))
 	return b, nil
 }
@@ -54,7 +54,7 @@ func (sd *StringDuration) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-func (sd *StringDuration) GobEncode() ([]byte, error) {
+func (sd StringDuration) GobEncode() ([]byte, error) {
 	return sd.MarshalBinary()
 }
 
@@ -62,7 +62,7 @@ func (sd *StringDuration) GobDecode(b []byte) error {
 	return sd.UnmarshalBinary(b)
 }
 
-func (sd *StringDuration) MarshalText() ([]byte, error) {
+func (sd StringDuration) MarshalText() ([]byte, error) {
 	return []byte(sd.String()), nil
 }
 
@@ -73,7 +73,7 @@ func (sd *StringDuration) UnmarshalText(b []byte) error {
 	return sd.Set(string(b))
 }
 
-func (sd *StringDuration) MarshalJSON() ([]byte, error) {
+func (sd StringDuration) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + sd.String() + `"`), nil
 }
 
@@ -89,8 +89,8 @@ func (sd *StringDuration) UnmarshalJSON(b []byte) error {
 	return sd.Set(clean)
 }
 
-func (sd *StringDuration) Duration() time.Duration {
-	td, _ := time.ParseDuration(string(*sd))
+func (sd StringDuration) Duration() time.Duration {
+	td, _ := time.ParseDuration(string(sd))
 	return td
 }
 
@@ -98,6 +98,14 @@ func (sd *StringDuration) FromDuration(td time.Duration) {
 	*sd = StringDuration(td.String())
 }
 
-func ConfinatorFlagVarTypeFunc(fs *flag.FlagSet, varPtr interface{}, name, usage string) {
+func ConfinatorFlagVarTypeFunc(fs *flag.FlagSet, varPtr any, name, usage string) {
 	fs.Var(varPtr.(*StringDuration), name, usage)
+}
+
+func FromDuration(d time.Duration) StringDuration {
+	return StringDuration(d.String())
+}
+
+func ToDuration(sd StringDuration) time.Duration {
+	return sd.Duration()
 }
