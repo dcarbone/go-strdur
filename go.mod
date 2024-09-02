@@ -3,7 +3,7 @@ module github.com/dcarbone/go-strdur/v2
 go 1.18
 
 require (
-	github.com/hashicorp/hcl/v2 v2.21.0
+	github.com/hashicorp/hcl/v2 v2.22.0
 	github.com/mitchellh/mapstructure v1.5.0
 )
 
