@@ -14,26 +14,25 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - '1.18'
-          - '1.19'
-          - '1.20'
-          - '1.21'
-          - '1.22'
+          - '1.25'
+          - '1.26'
 
     name: 'Tests - go v${{ matrix.go_version }}'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '${{ matrix.go_version }}'
           cache: true
 
       - name: 'vet'
+        # language=bash
         run: |
           go vet ./...
 
       - name: 'test'
+        # language=bash
         run: |
           go test ./...
