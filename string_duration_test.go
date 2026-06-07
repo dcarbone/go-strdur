@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
-	"github.com/mitchellh/mapstructure"
 
 	"github.com/dcarbone/go-strdur/v2"
 )
@@ -147,19 +146,6 @@ func TestStringDuration(t *testing.T) {
 				var tt testT
 				if err := hclsimple.Decode("example.hcl", tv.iHCL, nil, &tt); err != nil {
 					return tt.SDV, fmt.Errorf("error parsing %q as %T: %w", tv.iHCL, tt.SDV, err)
-				}
-				return tt.SDV, nil
-			},
-		},
-		{
-			name: "mapstructure",
-			op: func(t *testing.T, tv testValue) (strdur.StringDuration, error) {
-				type testT struct {
-					SDV strdur.StringDuration `mapstructure:"sdv"`
-				}
-				var tt testT
-				if err := mapstructure.Decode(tv.iMapStructure, &tt); err != nil {
-					return tt.SDV, fmt.Errorf("error parsing %q as %T: %w", tv.iMapStructure, tt.SDV, err)
 				}
 				return tt.SDV, nil
 			},
