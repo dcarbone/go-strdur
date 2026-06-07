@@ -163,7 +163,7 @@ func TestStringDuration(t *testing.T) {
 					err error
 				)
 				if sdv, err = testDef.op(t, value); err != nil {
-					t.Errorf(err.Error())
+					t.Error(err.Error())
 					t.Fail()
 					return
 				}
